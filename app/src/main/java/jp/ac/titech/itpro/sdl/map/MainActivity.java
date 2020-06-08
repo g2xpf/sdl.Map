@@ -10,6 +10,7 @@ import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -44,11 +45,14 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private LocationRequest request;
     private LocationCallback callback;
 
+    private LatLng currentLatLng;
+
     private enum State {
         STOPPED,
         REQUESTING,
         STARTED
     }
+
     private State state = State.STOPPED;
 
 
@@ -87,13 +91,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     return;
                 }
                 Location location = locationResult.getLastLocation();
-                LatLng ll = new LatLng(location.getLatitude(), location.getLongitude());
-                infoView.setText(getString(R.string.latlng_format, ll.latitude, ll.longitude));
-                if (map == null) {
-                    Log.d(TAG, "onLocationResult: map == null");
-                    return;
-                }
-                map.animateCamera(CameraUpdateFactory.newLatLng(ll));
+                currentLatLng = new LatLng(location.getLatitude(), location.getLongitude());
+                infoView.setText(getString(R.string.latlng_format, currentLatLng.latitude, currentLatLng.longitude));
             }
         };
     }
@@ -137,6 +136,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         Log.d(TAG, "onMapReady");
         map.moveCamera(CameraUpdateFactory.zoomTo(15f));
         this.map = map;
+
+        // 最初だけ東工大の位置を描画
+        LatLng titech = new LatLng(35.6050000, 139.6838889);
+        map.animateCamera(CameraUpdateFactory.newLatLng(titech));
     }
 
     @Override
@@ -186,5 +189,17 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         Log.d(TAG, "stopLocationUpdate");
         locationClient.removeLocationUpdates(callback);
         state = State.STOPPED;
+    }
+
+    public void onClick(View v) {
+        if (map == null) {
+            Log.d(TAG, "onLocationResult: map == null");
+            return;
+        }
+        if (currentLatLng == null) {
+            Log.d(TAG, "onLocationResult: currentLatLng == null");
+            return;
+        }
+        map.animateCamera(CameraUpdateFactory.newLatLng(currentLatLng));
     }
 }
